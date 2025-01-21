@@ -17,8 +17,9 @@ use serde_molecule::dynvec_serde;
 /// # Implementation Notes
 ///
 /// - All amounts are represented as u128 in convention
-/// - Methods that modify state return a Transaction that must be committed
+/// - Methods that modify state return a Transaction object for further processing in CCC.
 /// - Verification methods are separate from state-changing methods
+/// - All methods are optional to implement: you return SSRIError::SSRIMethodsNotImplemented if you don't implement a method.
 ///
 /// # Example
 ///
@@ -30,9 +31,9 @@ use serde_molecule::dynvec_serde;
 /// impl UDT for MyToken {
 ///     type Error = ();
 ///     
-///     fn balance() -> Result<u128, Self::Error> {
+///     fn decimals() -> Result<u8, Self::Error> {
 ///         // Implementation
-///         Ok(0)
+///         Ok(6u8)
 ///     }
 ///     // ... implement other required methods
 /// }
@@ -64,7 +65,6 @@ pub enum UDTError {
 }
 
 pub trait UDTPausable: UDT {
-    /* NOTE: Pausing/Unpause without lock hashes should take effect on the global level */
     fn pause(
         tx: Option<Transaction>,
         lock_hashes: &Vec<[u8; 32]>,
