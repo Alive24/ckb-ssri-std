@@ -3,11 +3,14 @@
 extern crate alloc;
 extern crate proc_macro;
 
+mod molecule_schema;
+
 use core::panic;
 
 use ckb_hash::blake2b_256;
 use proc_macro::TokenStream;
 use quote::quote;
+use syn::LitStr;
 use syn::{parse::Parse, parse_macro_input, Expr, ExprLit, Ident, Lit, Token};
 
 use alloc::vec;
@@ -160,4 +163,18 @@ pub fn ssri_methods(input: TokenStream) -> TokenStream {
             res
         }
     })
+}
+
+#[proc_macro_attribute]
+pub fn molecule_schema(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let schema = parse_macro_input!(attr as LitStr);
+    let input = parse_macro_input!(item as syn::ItemStruct);
+    
+    let struct_name = &input.ident;
+    let schema_content = schema.value();
+    
+    let codec_map = molecule_schema::CodecMap::parse_schema(&schema_content)
+        .expect("Failed to parse molecule schema");
+        
+    molecule_schema::generate_molecule_code(codec_map, struct_name)
 }
